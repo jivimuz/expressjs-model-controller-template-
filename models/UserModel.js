@@ -3,8 +3,11 @@ const db = require("../config/database");
 
 const User = db.define('m_users', {  
     name: DataTypes.STRING,
+    username: DataTypes.STRING,
     email: DataTypes.STRING,
-    gender: DataTypes.STRING
+    gender: DataTypes.STRING,
+    password: DataTypes.STRING,
+    jwt_token: DataTypes.STRING
 }, {
     freezeTableName: true  
 });
