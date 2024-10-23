@@ -1,43 +1,69 @@
 const UserModel = require("../models/UserModel");
 const jwt = require("jsonwebtoken");
+require('dotenv').config();
+const { Op } = require('sequelize');
+const bcrypt = require('bcrypt');
+
+const verifyJWT = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+  
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+  
+    const token = authHeader.split(' ')[1];
+  
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded; // Attach decoded user information to the request object
+      next();
+    } catch (error) {
+      console.error(error.message);
+      return res.status(403).json({ message: 'Invalid token' });
+    }
+};
 
 const loginUser = async (req, res) => {
     try {
-        const { login, password } = req.body;
-
+        const { username, password } = req.body;
         // Cari user berdasarkan username atau email
         const user = await UserModel.findOne({
-            $or: [{ email: login }, { username: login }]
+            where: {
+                [Op.or]: [{ username: username },{ email: username }]
+            }
         });
 
         if (!user) {
             return res.status(404).json({ message: "User tidak ditemukan" });
         }
 
-        // Verifikasi password
-        const isPasswordValid = await user.comparePassword(password);
-        if (!isPasswordValid) {
-            return res.status(401).json({ message: "Password salah" });
+        // Verifikasi password menggunakan bcrypt.compare
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (isMatch) {
+            // Buat JWT token
+            const token = jwt.sign(
+                { userId: user.id, email: user.email },
+                process.env.JWT_SECRET, // Gunakan secret key dari env
+                { expiresIn: "1h" }
+            );
+
+            // Simpan token dalam user
+            user.jwt_token = token;
+            await user.save();
+
+            // Kirim response dengan token
+            return res.status(200).json({ token });
+        } else {
+            return res.status(401).json({ message: "Kredensial salah" });
         }
 
-        // Buat JWT token
-        const token = jwt.sign(
-            { userId: user._id, email: user.email },
-            process.env.JWT_SECRET, // Gunakan secret key dari env
-            { expiresIn: "1h" }
-        );
-
-        // Simpan token JWT ke kolom jwt_token di database
-        user.jwt_token = token;
-        await user.save();
-
-        // Kirim respons dengan token
-        res.status(200).json({ token });
     } catch (error) {
         console.log(error.message);
-        res.status(500).json({ message: "Terjadi kesalahan server" });
+        return res.status(500).json({ message: error.message || "Terjadi kesalahan server" });
     }
 };
+
 
 const logoutUser = async (req, res) => {
     try {
@@ -73,4 +99,4 @@ const logoutUser = async (req, res) => {
     }
 };
 
-module.exports = { loginUser, logoutUser };
+module.exports = { loginUser, logoutUser, verifyJWT };

@@ -1,21 +1,49 @@
-GET http://localhost:4000/users
+GET http://localhost:3000/users
+Authorization: Bearer 
 ###
 
-GET http://localhost:4000/users/1
+GET http://localhost:3000/users/1
+Authorization: Bearer 
 ###
 
-POST http://localhost:4000/users
+
+POST http://localhost:3000/users/createDump
 Content-Type: application/json
 
 {
     "name": "Lorem Ipsum",
     "email": "lorem@ipsum.com",
-    "gender": "Male"
+    "gender": "Male",
+    "username" :"admin",
+    "password": "12341234"
 }
 ###
 
-PATCH  http://localhost:4000/users/1
+
+POST http://localhost:3000/users
 Content-Type: application/json
+Authorization: Bearer 
+
+{
+    "name": "Lorem Ipsum",
+    "email": "lorem@ipsum.com",
+    "gender": "Male",
+    "username" :"admin",
+    "password": "12341234"
+}
+###
+
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+    "username" :"admin",
+    "password": "12341234"
+}
+###
+PATCH  http://localhost:3000/users/1
+Content-Type: application/json
+Authorization: Bearer 
 
 {
     "name": "Lorem Ipsum2",
@@ -24,4 +52,5 @@ Content-Type: application/json
 }
 
 ###
-DELETE http://localhost:4000/users/3
+DELETE http://localhost:3000/users/3
+Authorization: Bearer 
